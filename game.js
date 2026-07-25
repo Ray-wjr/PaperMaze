@@ -1905,19 +1905,23 @@ class UIScene extends Phaser.Scene {
             fontFamily: 'FangSong, STFangsong, SimSun, serif',
             fontSize: '10px', color: '#8b5a5a'
         }).setOrigin(1, 1);
+
+        // 初始刷新
+        this.updateHUD({
+            shape: 'normal',
+            cutsUsed: 0,
+            maxCuts: room.maxCuts,
+            health: 100
+        });
     }
 
     _createMobileControls() {
         const bw = 52, bh = 52, margin = 16, bottom = GAME_H - bh - margin;
         const btnStyle = { fontFamily:'FangSong, STFangsong, serif', fontSize:'28px', color:'#4a3528' };
-
-        // 左键
         const lx = margin;
         this._makeMobBtn(lx, bottom, bw, bh, '◀', btnStyle, (down) => { this.mobileLeft = down; });
-        // 右键
         const rx = margin + bw + 8;
         this._makeMobBtn(rx, bottom, bw, bh, '▶', btnStyle, (down) => { this.mobileRight = down; });
-        // 跳键（右对齐）
         const jx = GAME_W - margin - bw*2 - 16;
         this._makeMobBtn(jx, bottom, bw*2+8, bh, '▲ 跳', btnStyle, (down) => { this.mobileJump = down; });
     }
@@ -1928,22 +1932,11 @@ class UIScene extends Phaser.Scene {
         bg.fillRoundedRect(x, y, w, h, 14);
         bg.lineStyle(1.5, C.WOOD, 0.5);
         bg.strokeRoundedRect(x, y, w, h, 14);
-
         this.add.text(x + w/2, y + h/2, label, style).setOrigin(0.5);
-
-        const zone = this.add.zone(x + w/2, y + h/2, w, h)
-            .setInteractive({ useHandCursor: true });
+        const zone = this.add.zone(x + w/2, y + h/2, w, h).setInteractive({ useHandCursor: true });
         zone.on('pointerdown', () => { callback(true); bg.clear(); bg.fillStyle(0xfcf8f2, 0.75); bg.fillRoundedRect(x,y,w,h,14); bg.lineStyle(1.5,C.WOOD,0.7); bg.strokeRoundedRect(x,y,w,h,14); });
         zone.on('pointerup', () => { callback(false); bg.clear(); bg.fillStyle(0xfcf8f2, 0.5); bg.fillRoundedRect(x,y,w,h,14); bg.lineStyle(1.5,C.WOOD,0.5); bg.strokeRoundedRect(x,y,w,h,14); });
         zone.on('pointerout', () => { callback(false); bg.clear(); bg.fillStyle(0xfcf8f2, 0.5); bg.fillRoundedRect(x,y,w,h,14); bg.lineStyle(1.5,C.WOOD,0.5); bg.strokeRoundedRect(x,y,w,h,14); });
-
-        // 初始刷新
-        this.updateHUD({
-            shape: 'normal',
-            cutsUsed: 0,
-            maxCuts: room.maxCuts,
-            health: 100
-        });
     }
 
     updateHUD(data) {
