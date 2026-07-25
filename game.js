@@ -1697,17 +1697,21 @@ class GameScene extends Phaser.Scene {
 
     checkGearInteract() {
         const room = ROOMS[this.roomIndex];
-        // 查找机关墙（窄墙）
+        // 查找机关墙（窄墙）— 状态存在 zone data 上，不污染全局 ROOMS
         const zonesToRemove = [];
         this.platforms.children.entries.forEach(zone => {
+            if (!zone.body || !zone.body.enable) return;
             const p = zone.getData('platDef');
-            if (!p || p._gearActivated) return;
+            if (!p) return;
+            // 使用 zone 自身存储激活状态，避免全局 ROOMS 污染导致重启失效
+            if (zone.getData('_gearActivated')) return;
             if (p.w <= 40 && p.w >= 20) {
                 const pcx = p.x + p.w / 2;
                 const pcy = p.y + p.h / 2;
                 const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, pcx, pcy);
-                if (d < 60) {
-                    p._gearActivated = true;
+                // 适当放宽检测距离，避免边缘情况
+                if (d < 75) {
+                    zone.setData('_gearActivated', true);
                     // 机关墙震动后消失
                     this.cameras.main.shake(200, 0.005);
                     this.showMessage('⚙ 齿轮转动！机关开启！', '#d4a843');
@@ -1727,9 +1731,9 @@ class GameScene extends Phaser.Scene {
             }
             // 房间背景色覆盖
             const cover = this.add.graphics();
+            cover.setDepth(0);
             cover.fillStyle(room.bgColor, 1);
             cover.fillRect(p.x - 2, p.y - 2, p.w + 4, p.h + 4);
-            cover.setDepth(0);
 
             zone.body.enable = false;
             this.time.delayedCall(100, () => zone.destroy());
@@ -1916,27 +1920,102 @@ class UIScene extends Phaser.Scene {
     }
 
     _createMobileControls() {
-        const bw = 52, bh = 52, margin = 16, bottom = GAME_H - bh - margin;
-        const btnStyle = { fontFamily:'FangSong, STFangsong, serif', fontSize:'28px', color:'#4a3528' };
-        const lx = margin;
-        this._makeMobBtn(lx, bottom, bw, bh, '◀', btnStyle, (down) => { this.mobileLeft = down; });
-        const rx = margin + bw + 8;
-        this._makeMobBtn(rx, bottom, bw, bh, '▶', btnStyle, (down) => { this.mobileRight = down; });
-        const jx = GAME_W - margin - bw*2 - 16;
-        this._makeMobBtn(jx, bottom, bw*2+8, bh, '▲ 跳', btnStyle, (down) => { this.mobileJump = down; });
+        // 更大的触摸按钮 (64-80px)，支持多点触控
+        var bw = 64, bh = 64, margin = 14, bottom = GAME_H - bh - margin;
+        var btnStyle = { fontFamily:'FangSong, STFangsong, serif', fontSize:'32px', color:'#4a3528' };
+
+        // 每组按键独立追踪 pointer ID，解决多点触控冲突
+        this._mobPointers = {}; // { 'left': pointerId, 'right': pointerId, 'jump': pointerId }
+
+        var lx = margin;
+        this._makeMobBtn(lx, bottom, bw, bh, '◀', btnStyle, 'left');
+
+        var rx = margin + bw + 6;
+        this._makeMobBtn(rx, bottom, bw, bh, '▶', btnStyle, 'right');
+
+        // 跳跃按钮更大，方便按
+        var jx = GAME_W - margin - bh - 6;
+        this._makeMobBtn(jx, bottom, bh, bh, '▲', btnStyle, 'jump');
     }
 
-    _makeMobBtn(x, y, w, h, label, style, callback) {
-        const bg = this.add.graphics();
-        bg.fillStyle(0xfcf8f2, 0.5);
-        bg.fillRoundedRect(x, y, w, h, 14);
-        bg.lineStyle(1.5, C.WOOD, 0.5);
-        bg.strokeRoundedRect(x, y, w, h, 14);
-        this.add.text(x + w/2, y + h/2, label, style).setOrigin(0.5);
-        const zone = this.add.zone(x + w/2, y + h/2, w, h).setInteractive({ useHandCursor: true });
-        zone.on('pointerdown', () => { callback(true); bg.clear(); bg.fillStyle(0xfcf8f2, 0.75); bg.fillRoundedRect(x,y,w,h,14); bg.lineStyle(1.5,C.WOOD,0.7); bg.strokeRoundedRect(x,y,w,h,14); });
-        zone.on('pointerup', () => { callback(false); bg.clear(); bg.fillStyle(0xfcf8f2, 0.5); bg.fillRoundedRect(x,y,w,h,14); bg.lineStyle(1.5,C.WOOD,0.5); bg.strokeRoundedRect(x,y,w,h,14); });
-        zone.on('pointerout', () => { callback(false); bg.clear(); bg.fillStyle(0xfcf8f2, 0.5); bg.fillRoundedRect(x,y,w,h,14); bg.lineStyle(1.5,C.WOOD,0.5); bg.strokeRoundedRect(x,y,w,h,14); });
+    _makeMobBtn(x, y, w, h, label, style, key) {
+        var self = this;
+        var bg = this.add.graphics();
+        var isDown = false;
+        var btnDepth = 20;
+
+        var drawUp = function() {
+            bg.clear();
+            bg.fillStyle(0xfcf8f2, 0.45);
+            bg.fillRoundedRect(x, y, w, h, 16);
+            bg.lineStyle(2, C.WOOD, 0.5);
+            bg.strokeRoundedRect(x, y, w, h, 16);
+            // 顶部高光
+            bg.fillStyle(0xffffff, 0.2);
+            bg.fillRoundedRect(x+4, y+2, w-8, h/2-4, {tl:12, tr:12, bl:4, br:4});
+        };
+
+        var drawDown = function() {
+            bg.clear();
+            bg.fillStyle(C.WOOD, 0.55);
+            bg.fillRoundedRect(x, y, w, h, 16);
+            bg.lineStyle(2.5, C.WOOD_DARK, 0.8);
+            bg.strokeRoundedRect(x, y, w, h, 16);
+            // 内阴影按压感
+            bg.fillStyle(0x000000, 0.12);
+            bg.fillRoundedRect(x+3, y+3, w-6, h-6, 13);
+        };
+
+        drawUp();
+        bg.setDepth(btnDepth);
+
+        var labelText = this.add.text(x + w/2, y + h/2, label, style).setOrigin(0.5).setDepth(btnDepth+1);
+
+        var zone = this.add.zone(x + w/2, y + h/2, w, h)
+            .setInteractive({ useHandCursor: false, draggable: false })
+            .setDepth(btnDepth+2);
+
+        zone.on('pointerdown', function(pointer) {
+            if (isDown) return;
+            isDown = true;
+            self._mobPointers[key] = pointer.id;
+            self['mobile' + key.charAt(0).toUpperCase() + key.slice(1)] = true;
+            drawDown();
+            // 轻微触觉反馈
+            if (self.sys.game.device.input.touch) {
+                self.cameras.main.shake(40, 0.002);
+            }
+        });
+
+        zone.on('pointerup', function(pointer) {
+            if (!isDown) return;
+            if (self._mobPointers[key] !== pointer.id) return;
+            isDown = false;
+            self._mobPointers[key] = null;
+            self['mobile' + key.charAt(0).toUpperCase() + key.slice(1)] = false;
+            drawUp();
+        });
+
+        // 手指滑出按钮范围时释放（但不影响其他按钮）
+        zone.on('pointerout', function(pointer) {
+            if (!isDown) return;
+            if (self._mobPointers[key] !== pointer.id) return;
+            isDown = false;
+            self._mobPointers[key] = null;
+            self['mobile' + key.charAt(0).toUpperCase() + key.slice(1)] = false;
+            drawUp();
+        });
+
+        // 手指滑回按钮时重新按下
+        zone.on('pointerover', function(pointer) {
+            if (isDown) return;
+            // 只有当这个 pointer 之前在别处按下且现在滑到该按钮上
+            if (!pointer.isDown) return;
+            isDown = true;
+            self._mobPointers[key] = pointer.id;
+            self['mobile' + key.charAt(0).toUpperCase() + key.slice(1)] = true;
+            drawDown();
+        });
     }
 
     updateHUD(data) {
@@ -1997,7 +2076,7 @@ const config = {
     roundPixels: true,
     autoRound: true,
     input: {
-        activePointers: 1,
+        activePointers: 3,
         touch: { capture: true }
     },
     physics: {
