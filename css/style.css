@@ -1,0 +1,122 @@
+/* === 写实质感风全局样式 === */
+:root {
+  --bg-deep: #1a0c04;
+  --bg-kiln: #2a1808;
+  --clay-dark: #6b3a1a;
+  --clay-mid: #8b5a30;
+  --clay-light: #c49470;
+  --clay-pale: #e8c8a0;
+  --fire-bright: #ff9940;
+  --fire-warm: #ffcc66;
+  --fire-hot: #ff6b35;
+  --glaze-green: #7ab8a0;
+  --glaze-brown: #6b3a2a;
+  --glaze-red: #c44;
+  --text-light: #e8c8a0;
+  --text-pale: #f5e6d0;
+  --ui-font: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --title-font: 'Georgia', 'SimSun', 'KaiTi', serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg-deep);
+  font-family: var(--ui-font);
+  position: relative;
+}
+
+body { touch-action: none; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+  pointer-events: none; z-index: 999;
+}
+
+#gameCanvas {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+#uiLayer {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 10;
+}
+
+#uiLayer > * { pointer-events: auto; }
+
+.btn {
+  display: inline-block; padding: 12px 36px;
+  border: 2px solid var(--fire-bright);
+  background: rgba(255, 153, 64, 0.1);
+  color: var(--fire-bright);
+  font-family: var(--title-font);
+  font-size: 18px; letter-spacing: 4px;
+  cursor: pointer; border-radius: 4px;
+  transition: all 0.3s;
+  text-align: center; user-select: none;
+}
+.btn:hover { background: rgba(255, 153, 64, 0.25); }
+.btn:active { background: rgba(255, 153, 64, 0.4); }
+
+.game-title {
+  font-family: var(--title-font);
+  color: var(--text-pale);
+  font-size: 48px; letter-spacing: 8px;
+  text-shadow: 0 0 40px rgba(255, 150, 50, 0.3);
+}
+
+.game-subtitle {
+  font-family: var(--ui-font);
+  color: var(--clay-pale);
+  font-size: 16px; letter-spacing: 6px;
+  margin-top: 12px;
+}
+
+/* === Stage transition animations === */
+@keyframes stageFadeIn {
+  from { opacity: 0; transform: scale(1.05); }
+  to { opacity: 1; transform: scale(1); }
+}
+.intro-overlay { animation: stageFadeIn 0.5s ease-out; }
+.transition-overlay { animation: stageFadeIn 0.5s ease-out; }
+.result-overlay { animation: stageFadeIn 0.8s ease-out; }
+
+/* === Menu & shape selection === */
+.menu-container {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 24px;
+}
+
+.shape-card {
+  width: 100px; height: 100px;
+  border: 2px solid #5a3a1a;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  background: rgba(139, 90, 48, 0.15);
+  transition: all 0.3s;
+  color: var(--clay-pale);
+  font-size: 20px;
+  letter-spacing: 2px;
+  user-select: none;
+}
+.shape-card:hover { border-color: var(--fire-bright); background: rgba(255, 153, 64, 0.2); }
+.shape-card:active { background: rgba(255, 153, 64, 0.35); }
+
+/* === Mobile responsive === */
+@media (max-width: 768px) {
+  .game-title { font-size: 32px; letter-spacing: 4px; }
+  .game-subtitle { font-size: 13px; letter-spacing: 3px; }
+  .btn { padding: 10px 28px; font-size: 16px; }
+  .shape-card { width: 70px !important; height: 70px !important; font-size: 16px !important; }
+}

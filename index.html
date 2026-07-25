@@ -1,44 +1,24 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>纸境迷踪 — PaperMaze</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="phaser.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>陶魂 — 荣昌陶器</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div id="game-container"></div>
+  <canvas id="gameCanvas"></canvas>
+  <div id="uiLayer"></div>
 
-    <script>
-    // 阻止移动端默认手势（双指缩放、拖动等）
-    document.addEventListener('touchmove', function(e) {
-        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-            e.preventDefault();
-        }
-    }, { passive: false });
-
-    document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
-    document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
-    document.addEventListener('gestureend', function(e) { e.preventDefault(); });
-
-    // 全局错误捕获
-    window.onerror = function(msg, url, line, col, error) {
-        var div = document.createElement('div');
-        div.style.cssText = 'color:#ff6666;background:#1a0a00;padding:12px;margin:8px;border:2px solid #ff4444;border-radius:4px;font-family:monospace;font-size:12px;white-space:pre-wrap;position:fixed;top:8px;left:8px;right:8px;z-index:99999;';
-        div.textContent = '错误: ' + msg + '\n行: ' + line;
-        document.body.prepend(div);
-        return false;
-    };
-
-    if (typeof Phaser === 'undefined') {
-        document.body.innerHTML = '<div style="color:#ffcc00;background:#1a0a00;padding:40px;text-align:center;font-family:KaiTi,serif;font-size:20px;">⚠ Phaser 库加载失败</div>';
-    }
-    </script>
-
-    <script src="game.js"></script>
+  <!-- 依赖顺序：底层 → 上层 -->
+  <script src="js/audio.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/stages/knead.js"></script>
+  <script src="js/stages/throw.js"></script>
+  <script src="js/stages/trim.js"></script>
+  <script src="js/stages/carve.js"></script>
+  <script src="js/stages/fire.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
