@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Serif+SC:wght@400;600;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    touch-action: manipulation;
+    -webkit-overflow-scrolling: none;
+}
+
+body {
+    background: radial-gradient(ellipse at 50% 30%, #f5efe8 0%, #ded5ca 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: "Inter", "Noto Serif SC", "FangSong", "STFangsong", "KaiTi", sans-serif;
+    letter-spacing: 0.02em;
+}
+
+#game-container {
+    width: 100%;
+    max-width: 960px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow:
+        0 2px 16px rgba(44,24,16,0.06),
+        0 8px 48px rgba(44,24,16,0.05),
+        0 0 0 1px rgba(255,255,255,0.5);
+}
+
+/* 移动端全宽 */
+@media (max-width: 960px) {
+    #game-container {
+        border-radius: 0;
+        max-width: 100%;
+    }
+    body {
+        background: #f5efe8;
+    }
+}
+
+canvas {
+    image-rendering: crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: none;
+}
+
+/* 动画 */
+@keyframes bouncePop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.25); }
+    60% { transform: scale(0.9); }
+    100% { transform: scale(1); }
+}
